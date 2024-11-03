@@ -1,0 +1,9 @@
+services:
+  bot:
+    image: role-master
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: unless-stopped
+    volumes:
+      - ./database.db:/app/database.db
