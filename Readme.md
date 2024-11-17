@@ -1,6 +1,9 @@
 # RoleMater
+Discordを利用したイベント抽選bot
 
-
+## 必須ツール
+* cargo
+* sqlx-cli
 
 ## DBマイグレーション
 ### ツールのインストール
