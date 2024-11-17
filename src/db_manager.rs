@@ -1,43 +1,43 @@
 use std::env;
 use std::sync::Arc;
-use tokio::sync::{Mutex, OnceCell};
-use sqlx::{Database, Pool, Sqlite, SqlitePool};
+use tokio::sync::{OnceCell};
+use sqlx::{SqlitePool};
 use sqlx::sqlite::SqlitePoolOptions;
 
 #[derive(sqlx::FromRow)]
 pub struct Users {
-    pub discordId: u64,
-    pub userName: String,
-    pub displayName: String,
+    pub discord_id: u64,
+    pub user_name: String,
+    pub display_name: String,
     pub ban: bool,
-    pub createAt: String,
-    pub updateAt: String,
+    pub create_at: String,
+    pub update_at: String,
 }
 
 #[derive(sqlx::FromRow)]
 pub struct ReactionEmoji {
     pub id: i32,
-    pub instanceNum: i32,
-    pub isCustomEmoji: bool,
-    pub unicodeEmoji: String,
-    pub isAnimatedCustomEmoji: bool,
-    pub customEmojiId: u64,
-    pub customEmojiName: String,
+    pub instance_num: i32,
+    pub is_custom_emoji: bool,
+    pub unicode_emoji: String,
+    pub is_animated_custom_emoji: bool,
+    pub custom_emoji_id: u64,
+    pub custom_emoji_name: String,
 }
 
 #[derive(sqlx::FromRow)]
 pub struct UserMissCount {
-    pub discordId: u64,
+    pub discord_id: u64,
     pub count: i32,
-    pub createAt: String,
-    pub updateAt: String,
+    pub create_at: String,
+    pub update_at: String,
 }
 
 #[derive(sqlx::FromRow)]
 pub struct RoleAssignment {
     pub id: i32,
-    pub instanceNum: i32,
-    pub roleId: u64,
+    pub instance_num: i32,
+    pub role_id: u64,
 }
 
 #[derive(Clone)]

@@ -1,9 +1,5 @@
-use std::env;
-use rand::Rng;
-use serenity::all::{CommandInteraction, CommandOptionType, CreateCommandOption, Permissions, ResolvedValue};
+use serenity::all::{CommandInteraction, Permissions};
 use serenity::builder::CreateCommand;
-use serenity::model::application::ResolvedOption;
-use sqlx::sqlite::SqlitePoolOptions;
 use crate::job_manager::JobManager;
 
 pub async fn run(interaction: &CommandInteraction) -> String {

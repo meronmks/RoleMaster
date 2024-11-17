@@ -5,12 +5,12 @@ use serenity::model::application::ResolvedOption;
 
 pub fn run(options: &[ResolvedOption]) -> String {
     if let Some(ResolvedOption {
-        value: ResolvedValue::Integer(diceN), ..
+        value: ResolvedValue::Integer(dice_n), ..
     }) = options.get(0)
     {
         let mut rnd = rand::thread_rng();
-        let num: i64 = rnd.gen_range(1..*diceN);
-        format!("{}面ダイスを振りました！　結果は「{}」でした！", *diceN, num).to_string()
+        let num: i64 = rnd.gen_range(1..*dice_n);
+        format!("{}面ダイスを振りました！　結果は「{}」でした！", *dice_n, num).to_string()
     } else {
         "NaN".to_string()
     }

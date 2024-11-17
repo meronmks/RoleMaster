@@ -1,4 +1,4 @@
-use serenity::all::{CommandInteraction, CommandOptionType, CreateCommandOption, Permissions, ResolvedValue};
+use serenity::all::{CommandOptionType, CreateCommandOption, Permissions, ResolvedValue};
 use serenity::builder::CreateCommand;
 use serenity::model::application::ResolvedOption;
 use crate::job_manager::JobManager;
@@ -8,7 +8,7 @@ pub async fn run(options: &[ResolvedOption<'_>]) -> String {
                     value: ResolvedValue::String(job_id), ..
                 }) = options.get(0)
     {
-        if let Err(why) = JobManager::cancel_job(*job_id).await {
+        if let Err(_) = JobManager::cancel_job(*job_id).await {
             return "指定されたJobIDはありません。".to_string();
         }
         "指定されたJobはキャンセルされました。".to_string()

@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Result;
 use serenity::all::GatewayIntents;
 use serenity::Client;
-use tokio_cron_scheduler::{Job, JobScheduler, JobSchedulerError};
 use crate::db_manager::DbManager;
 use crate::event_handler::Handler;
 use crate::job_manager::JobManager;

@@ -11,8 +11,8 @@ RUN cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime && \
 
 WORKDIR /app
 
-COPY --from=build /app/target/release/RoleMaster .
+COPY --from=build /app/target/release/role_master .
 COPY ./config.json .
 ENV DATABASE_URL="sqlite:./database.db" RUST_LOG="info"
 
-ENTRYPOINT ./RoleMaster
+ENTRYPOINT ./role_master

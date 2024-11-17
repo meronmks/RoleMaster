@@ -1,6 +1,4 @@
-use std::env;
-use std::sync::Arc;
-use serenity::all::{Command, Context, CreateInteractionResponse, CreateInteractionResponseMessage, GuildId, Interaction, Ready};
+use serenity::all::{Command, Context, CreateInteractionResponse, CreateInteractionResponseMessage, Interaction, Ready};
 use serenity::async_trait;
 use serenity::prelude::EventHandler;
 use log::{error, info};

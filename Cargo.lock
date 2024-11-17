@@ -3,24 +3,6 @@
 version = 3
 
 [[package]]
-name = "RoleMaster"
-version = "1.0.0-alpha.1"
-dependencies = [
- "chrono",
- "env_logger",
- "log",
- "once_cell",
- "rand",
- "rand_chacha",
- "serde",
- "serde_json",
- "serenity",
- "sqlx",
- "tokio",
- "tokio-cron-scheduler",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1486,6 +1468,23 @@ dependencies = [
  "spin",
  "untrusted",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "role_master"
+version = "1.0.0-alpha.1"
+dependencies = [
+ "chrono",
+ "env_logger",
+ "log",
+ "once_cell",
+ "rand",
+ "serde",
+ "serde_json",
+ "serenity",
+ "sqlx",
+ "tokio",
+ "tokio-cron-scheduler",
 ]
 
 [[package]]

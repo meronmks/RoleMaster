@@ -1,32 +1,23 @@
 use std::collections::HashMap;
-use std::env;
-use std::num::NonZeroU64;
-use std::sync::Arc;
-use chrono::{DateTime, Duration, Local, NaiveDateTime, NaiveTime, TimeZone, Utc};
-use log::{debug, error, info};
-use rand::prelude::SliceRandom;
-use rand::SeedableRng;
+use chrono::{Duration, Local, NaiveDateTime, NaiveTime, TimeZone, Utc};
+use log::{error, info};
 use rand::seq::IteratorRandom;
-use rand_chacha::ChaCha12Rng;
-use serenity::all::{ButtonStyle, ChannelId, CommandInteraction, CommandOptionType, Context, CreateActionRow, CreateButton, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, EmojiId, Message, MessageId, ReactionType, ResolvedOption, ResolvedValue, RoleId, User, UserId};
-use serenity::all::TeamMemberRole::Admin;
+use serenity::all::{ChannelId, CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage, EmojiId, Message, ReactionType, ResolvedOption, ResolvedValue, RoleId, User};
 use serenity::Error;
 use serenity::model::Permissions;
-use crate::commands;
 use crate::job_manager::JobManager;
-use sqlx::sqlite::{SqlitePool, SqlitePoolOptions};
 use crate::db_manager::{DbManager, ReactionEmoji, RoleAssignment, UserMissCount, Users};
 
 pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), serenity::Error> {
     if let Some(ResolvedOption {
-        value: ResolvedValue::Integer(instanceNumb), ..
+        value: ResolvedValue::Integer(instance_numb), ..
     }) = interaction.data.options().get(0){
         let date_str:String;
         let today = Local::now().naive_local();
         if let Some(ResolvedOption {
-            value: ResolvedValue::String(dateStr), ..
+            value: ResolvedValue::String(date), ..
         }) = interaction.data.options().get(1){
-            date_str = dateStr.to_string();
+            date_str = date.to_string();
         } else {
             let specified_time = NaiveTime::from_hms_opt(21, 45, 0).unwrap();
             let datetime = NaiveDateTime::new(today.into(), specified_time);
@@ -79,7 +70,7 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
             .content(format!("以下の設定で募集を開始します。\n\
             募集インスタンス数： {} \n\
             募集人数： {}\n\
-            締切日時: <t:{}>", *instanceNumb, max_cap, unix_time))
+            締切日時: <t:{}>", *instance_numb, max_cap, unix_time))
             .ephemeral(true);
         let builder = CreateInteractionResponse::Message(data);
         if let Err(why) = interaction.create_response(&ctx.http, builder).await {
@@ -87,25 +78,25 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
         }
 
         let db_pool = DbManager::get_connection();
-        let reactions = sqlx::query_as::<_, ReactionEmoji>("SELECT * FROM reaction_emoji_settings ORDER BY instanceNum ASC")
+        let reactions = sqlx::query_as::<_, ReactionEmoji>("SELECT * FROM reaction_emoji_settings ORDER BY instance_num ASC")
             .fetch_all(&*db_pool)
             .await.unwrap();
 
-        let m = channel_id.say(&ctx.http, format!("<t:{}:D>のエントリー受付を開始します。\n来店を希望される方は以下のリアクションより希望するインスタンス番号に該当するものをリアクションしてください！（複数インスタンスへの希望可）\n募集インスタンス数： {} \nエントリー締切日時: <t:{}>", unix_time, *instanceNumb, unix_time)).await.expect("Unable to send message");
+        let m = channel_id.say(&ctx.http, format!("<t:{}:D>のエントリー受付を開始します。\n来店を希望される方は以下のリアクションより希望するインスタンス番号に該当するものをリアクションしてください！（複数インスタンスへの希望可）\n募集インスタンス数： {} \nエントリー締切日時: <t:{}>", unix_time, *instance_numb, unix_time)).await.expect("Unable to send message");
 
         let mut n = 0;
         for reaction in reactions {
-            if (n == *instanceNumb) {
+            if  n == *instance_numb {
                 break;
             }
-            if(reaction.isCustomEmoji == false){
-                let reaction = ReactionType::try_from(reaction.unicodeEmoji).unwrap();
+            if reaction.is_custom_emoji == false {
+                let reaction = ReactionType::try_from(reaction.unicode_emoji).unwrap();
                 m.react(&ctx.http, reaction).await.expect("Unable to react");
             } else {
                 let custom_emoji = ReactionType::Custom {
-                    animated: reaction.isAnimatedCustomEmoji,
-                    id: EmojiId::new(reaction.customEmojiId),
-                    name: Some(reaction.customEmojiName),
+                    animated: reaction.is_animated_custom_emoji,
+                    id: EmojiId::new(reaction.custom_emoji_id),
+                    name: Some(reaction.custom_emoji_name),
                 };
                 m.react(&ctx.http, custom_emoji).await.expect("Unable to react custom_emoji");
             }
@@ -113,7 +104,7 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
         }
 
         let guild_id = interaction.clone().guild_id.clone();
-        let instance_num = instanceNumb.clone();
+        let instance_num = instance_numb.clone();
 
         JobManager::add_one_shot_job(format!("{:?}/{:?}/{:?}/{:?}",interaction.guild_id, channel_id, m.id, date_str).as_str(), core::time::Duration::from_secs(duration.num_seconds() as u64),  move || {
             let ctx = ctx.clone();
@@ -136,7 +127,7 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
 
                         // TODO:ロール等で除外する処理をここに入れる
 
-                        let user_miss_count = sqlx::query_as::<_, UserMissCount>("SELECT * FROM user_miss_count WHERE discordId = $1")
+                        let user_miss_count = sqlx::query_as::<_, UserMissCount>("SELECT * FROM user_miss_count WHERE discord_id = $1")
                             .bind(user.id.get() as i64)
                             .fetch_optional(&*db_pool)
                             .await.unwrap();
@@ -156,24 +147,26 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
                             }
                         }
 
-                        let user_row = sqlx::query_as::<_, Users>("SELECT * FROM users WHERE discordId = $1")
+                        let user_row = sqlx::query_as::<_, Users>("SELECT * FROM users WHERE discord_id = $1")
                             .bind(user.id.get() as i64)
                             .fetch_optional(&*db_pool)
                             .await.unwrap();
 
                         match user_row {
-                            Some(row) => {
-                                sqlx::query("UPDATE users SET updateAt = $1 WHERE discordId = $2")
+                            Some(_) => {
+                                sqlx::query("UPDATE users SET user_name = $1, display_name = $2, update_at = $3 WHERE discord_id = $4")
+                                    .bind(user.name.clone())
+                                    .bind(user.display_name())
                                     .bind(Utc::now().format("%Y-%m-%d %H:%M:%S").to_string())
                                     .bind(user.id.get() as i64)
                                     .execute(&*db_pool)
                                     .await.unwrap();
                             }
                             None => {
-                                sqlx::query("INSERT INTO users (discordId, userName, displayName) values ($1, $2, $3)")
+                                sqlx::query("INSERT INTO users (discord_id, user_name, display_name) values ($1, $2, $3)")
                                     .bind(user.id.get() as i64)
                                     .bind(user.name.clone())
-                                    .bind(user.display_name().clone())
+                                    .bind(user.display_name())
                                     .execute(&*db_pool)
                                     .await.unwrap();
                             }
@@ -183,33 +176,32 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
 
                 // 抽選準備が整ったはずなので第一インスタンスから抽選開始
                 info!("抽選開始");
-                let reactions = sqlx::query_as::<_, ReactionEmoji>("SELECT * FROM reaction_emoji_settings ORDER BY instanceNum ASC")
+                let reactions = sqlx::query_as::<_, ReactionEmoji>("SELECT * FROM reaction_emoji_settings ORDER BY instance_num ASC")
                     .fetch_all(&*db_pool)
                     .await.unwrap();
                 let mut n = 0;
-                let mut rng = ChaCha12Rng::from_entropy();
                 for reaction in reactions {
-                    if (n == instance_num) {
+                    if n == instance_num {
                         break;
                     }
 
-                    let role_assignment = sqlx::query_as::<_, RoleAssignment>("SELECT * FROM role_assignment WHERE instanceNum = $1")
+                    let role_assignment = sqlx::query_as::<_, RoleAssignment>("SELECT * FROM role_assignment WHERE instance_num = $1")
                         .bind(n+1)
                         .fetch_one(&*db_pool)
                         .await.unwrap();
 
-                    let mut key:String;
-                    if(reaction.isCustomEmoji == false){
-                        key = reaction.unicodeEmoji;
+                    let key:String;
+                    if reaction.is_custom_emoji == false {
+                        key = reaction.unicode_emoji;
                     } else{
-                        key = format!("<:{}:{}>",reaction.customEmojiName, reaction.customEmojiId);
+                        key = format!("<:{}:{}>", reaction.custom_emoji_name, reaction.custom_emoji_id);
                     }
 
                     let popped_values = random_pop_individual(&mut all_entry_user, &key, max_cap as usize);
 
                     // 抽選で当たった人
                     for u in popped_values {
-                        guild_id.unwrap().member(&ctx.http, u.id).await.unwrap().add_role(&ctx.http, RoleId::new(role_assignment.roleId)).await.unwrap();
+                        guild_id.unwrap().member(&ctx.http, u.id).await.unwrap().add_role(&ctx.http, RoleId::new(role_assignment.role_id)).await.unwrap();
                     }
 
                     n += 1;
@@ -219,21 +211,21 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
 
                 // 最後まで残ってた人（惜しくも抽選に外れた人）の処理
 
-                let role_assignment = sqlx::query_as::<_, RoleAssignment>("SELECT * FROM role_assignment WHERE instanceNum = $1")
+                let role_assignment = sqlx::query_as::<_, RoleAssignment>("SELECT * FROM role_assignment WHERE instance_num = $1")
                     .bind(0)
                     .fetch_one(&*db_pool)
                     .await.unwrap();
 
                 for (_, value) in all_entry_user {
                     for u in value {
-                        let user_miss_count = sqlx::query_as::<_, UserMissCount>("SELECT * FROM user_miss_count WHERE discordId = $1")
+                        let user_miss_count = sqlx::query_as::<_, UserMissCount>("SELECT * FROM user_miss_count WHERE discord_id = $1")
                             .bind(u.id.get() as i64)
                             .fetch_optional(&*db_pool)
                             .await.unwrap();
 
                         match user_miss_count{
                             Some(row) => {
-                                sqlx::query("UPDATE user_miss_count SET count = $1, updateAt = $2 WHERE discordId = $3")
+                                sqlx::query("UPDATE user_miss_count SET count = $1, update_at = $2 WHERE discord_id = $3")
                                     .bind(row.count + 1)
                                     .bind(Utc::now().format("%Y-%m-%d %H:%M:%S").to_string())
                                     .bind(u.id.get() as i64)
@@ -241,7 +233,7 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
                                     .await.unwrap();
                             }
                             None => {
-                                sqlx::query("INSERT INTO user_miss_count (discordId, count) values ($1, $2)")
+                                sqlx::query("INSERT INTO user_miss_count (discord_id, count) values ($1, $2)")
                                     .bind(u.id.get() as i64)
                                     .bind(1)
                                     .execute(&*db_pool)
@@ -249,7 +241,7 @@ pub async fn run(ctx: Context, interaction: &CommandInteraction) -> Result<(), s
                             }
                         }
 
-                        guild_id.unwrap().member(&ctx.http, u.id).await.unwrap().add_role(&ctx.http, RoleId::new(role_assignment.roleId)).await.unwrap();
+                        guild_id.unwrap().member(&ctx.http, u.id).await.unwrap().add_role(&ctx.http, RoleId::new(role_assignment.role_id)).await.unwrap();
                     }
                 }
 
