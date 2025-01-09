@@ -15,4 +15,4 @@ COPY --from=build /app/target/release/role_master .
 COPY ./config.json .
 ENV DATABASE_URL="sqlite:./database.db" RUST_LOG="info"
 
-ENTRYPOINT ./role_master
+ENTRYPOINT ["./role_master"]
