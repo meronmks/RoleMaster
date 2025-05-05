@@ -4,6 +4,7 @@ Discordを利用したイベント抽選bot
 ## 必須ツール
 * cargo
 * sqlx-cli
+* (Ubuntuの場合) build-essential libffi-dev pkg-config libssl-dev
 
 ## DBマイグレーション
 ### ツールのインストール
@@ -47,3 +48,6 @@ sqlx migrate run
 ```sh
 sqlx migrate revert
 ```
+
+## デバッグ時の注意点
+Dockerで動かしている場合、コードを編集しても再ビルドが走らないので明示的に再ビルドを行う必要があります。

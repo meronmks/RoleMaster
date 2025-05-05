@@ -9,6 +9,7 @@ pub async fn run(ctx: &Context, interaction: &CommandInteraction) -> Result<(), 
         commands::entry::register(),
         commands::list_entry::register(),
         commands::cancel_entry::register(),
+        commands::reset_roles::register(),
     ]).await {
         error!("Error commands registered fail: {:?}", why);
     }

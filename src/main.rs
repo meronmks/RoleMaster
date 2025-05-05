@@ -29,6 +29,11 @@ fn get_token(file_name: &str) -> Result<String> {
 
 #[tokio::main]
 async fn main() {
+
+    let intents = GatewayIntents::GUILDS
+        | GatewayIntents::GUILD_MEMBERS
+        | GatewayIntents::GUILD_MESSAGES;
+
     if cfg!(debug_assertions) {
         env::set_var("RUST_LOG", "info");
         env::set_var("DATABASE_URL", "sqlite:./database.db");
@@ -41,7 +46,7 @@ async fn main() {
     let token = get_token("config.json").expect("Expected a token in the environment");
 
     // Build our client.
-    let mut client = Client::builder(token, GatewayIntents::empty())
+    let mut client = Client::builder(token, intents)
         .event_handler(Handler)
         .await
         .expect("Error creating client");

@@ -13,6 +13,7 @@ WORKDIR /app
 
 COPY --from=build /app/target/release/role_master .
 COPY ./config.json .
+COPY ./database.db .
 ENV DATABASE_URL="sqlite:./database.db" RUST_LOG="info"
 
 ENTRYPOINT ["./role_master"]
